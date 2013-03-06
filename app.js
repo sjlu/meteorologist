@@ -18,78 +18,96 @@ exports.forecast = function(zipcode)
          parseXml(body, function (err, result)
          {
             // just ignore some stuff we don't need.
-            result = result.dwml.data[0];
+            result = result['dwml']['data'][0];
+            var results = {
+               times: result['time-layout'],
+               temps: result['parameters'][0]['temperature'],
+               predictions: result['parameters'][0]['weather'][0]
+            };
             var forecast = {};
 
             // we need to parse the time frames out,
             // so that way we can use it parse 
             // other data out
             var times = {};
-            var resultTimes = result['time-layout'];
-            for (var i in resultTimes)
+            for (var i in results.times)
             {
                var intervals = [];
-               for (var j = 0; j < resultTimes[i]['start-valid-time'].length; j++)
+               for (var j = 0; j < results.times[i]['start-valid-time'].length; j++)
                {
                   // create the interval time.
-                  var interval = {
-                     "start": moment(resultTimes[i]['start-valid-time'][j]).format('X'),
-                  };
+                  var interval = moment(results.times[i]['start-valid-time'][j]).format('X');
 
                   // we need to start-up our response with days
                   // as that's how we're going to respond to people
-                  var day = getDay(interval.start);
+                  var day = getDay(interval);
                   if (typeof forecast[day] === "undefined")
                      forecast[day] = {};
 
                   intervals.push(interval);
                }
 
-               times[resultTimes[i]['layout-key'][0]] = intervals;
+               times[results.times[i]['layout-key'][0]] = intervals;
             }
 
-
             // building out temperature to days.
-            var resultTemps = result['parameters'][0]['temperature'];
-            for (var i in resultTemps)
+            // this for loop is for looking at min and max
+            // will only ever run twice.
+            for (var i in results.temps)
             {
-               var timeLayout = resultTemps[i]['$']['time-layout'];
-               var type = resultTemps[i]['$'].type;
+               // gotta figure out waht itme layout we're using.
+               var timeLayout = results.temps[i]['$']['time-layout'];
+               
+               // high and low makes more sense.
+               var type = results.temps[i]['$'].type;
                if (type == 'maximum')
                   type = 'high';
                else
                   type = 'low';
 
-               for (var j in resultTemps[i].value)
+               // so each value is directly correlated to our
+               // values of time layouts. we'll walk through each
+               // and see the temperature for the day.
+               for (var j in results.temps[i].value)
                {
-                  var day = getDay(times[timeLayout][j].start);
+                  var day = getDay(times[timeLayout][j]);
 
+                  // build it out into our array.
                   if (typeof forecast[day].temperatures === "undefined")
                      forecast[day].temperatures = {};
 
-                  forecast[day].temperatures[type] = resultTemps[i].value[j];
+                  forecast[day].temperatures[type] = results.temps[i].value[j];
                }
             }
 
             // building out hour to hour forecasts to days.
-            var resultWeather = result['parameters'][0]['weather'][0];
-            var timeLayout = resultWeather['$']['time-layout'];
-            resultWeather = resultWeather['weather-conditions'];
-            for (var i in resultWeather)
+            // it is always one to one, and only one result set.
+            var timeLayout = results.predictions['$']['time-layout'];
+            results.predictions = results.predictions['weather-conditions'];
+            // looking at each prediction
+            for (var i in results.predictions)
             {
-               if (typeof resultWeather[i]['value'] === "undefined")
+               if (typeof results.predictions[i]['value'] === "undefined")
                   continue;
 
-               var hour = times[timeLayout][i].start;
+               // each interval is always on the hour
+               // we just need to get the day.
+               var hour = times[timeLayout][i];
                var day = getDay(hour); 
 
                if (typeof forecast[day].predictions === "undefined")
                   forecast[day].predictions = {};
 
-               forecast[day].predictions[hour] = resultWeather[i]['value'][0]['$'];
+               var prediction = results.predictions[i]['value'][0]['$'];
+               // take the prediction and place it directly into the object.
+               forecast[day].predictions[hour] = {
+                  'prediction': prediction['coverage'],
+                  'intensity': prediction['intensity'],
+                  'weather': prediction['weather-type']
+               };
             }
 
-            console.log(forecast);
+            console.log(JSON.stringify(forecast));
          });
       }
    });
