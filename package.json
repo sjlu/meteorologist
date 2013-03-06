@@ -1,0 +1,14 @@
+{
+   "name": "meteorology",
+   "description": "Get some weather for your zip codes.",
+   "version": "1.0.0",
+   "author": "Steven Lu <slu@me.com>",
+   "dependencies": {
+      "express": "3.x",
+      "cities": "1.x",
+      "request": "2.14.x",
+      "xml2js": "0.2.x",
+      "moment": "2.x"
+   },
+   "main": "app.js"
+}
