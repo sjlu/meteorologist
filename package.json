@@ -1,5 +1,5 @@
 {
-   "name": "meteorology",
+   "name": "meteorologist",
    "description": "Get some weather for your zip codes.",
    "version": "1.0.0",
    "author": "Steven Lu <slu@me.com>",

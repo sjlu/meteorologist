@@ -19,6 +19,7 @@ exports.forecast = function(zipcode)
          {
             // just ignore some stuff we don't need.
             result = result.dwml.data[0];
+            var forecast = {};
 
             // we need to parse the time frames out,
             // so that way we can use it parse 
@@ -30,9 +31,16 @@ exports.forecast = function(zipcode)
                var intervals = [];
                for (var j = 0; j < resultTimes[i]['start-valid-time'].length; j++)
                {
+                  // create the interval time.
                   var interval = {
                      "start": moment(resultTimes[i]['start-valid-time'][j]).format('X'),
                   };
+
+                  // we need to start-up our response with days
+                  // as that's how we're going to respond to people
+                  var day = getDay(interval.start);
+                  if (typeof forecast[day] === "undefined")
+                     forecast[day] = {};
 
                   intervals.push(interval);
                }
@@ -40,8 +48,8 @@ exports.forecast = function(zipcode)
                times[resultTimes[i]['layout-key'][0]] = intervals;
             }
 
+
             // building out temperature to days.
-            var temps = {};
             var resultTemps = result['parameters'][0]['temperature'];
             for (var i in resultTemps)
             {
@@ -56,15 +64,14 @@ exports.forecast = function(zipcode)
                {
                   var day = getDay(times[timeLayout][j].start);
 
-                  if (typeof temps[day] === "undefined")
-                     temps[day] = {};
+                  if (typeof forecast[day].temperatures === "undefined")
+                     forecast[day].temperatures = {};
 
-                  temps[day][type] = resultTemps[i].value[j];
+                  forecast[day].temperatures[type] = resultTemps[i].value[j];
                }
             }
 
             // building out hour to hour forecasts to days.
-            var predictions = {};
             var resultWeather = result['parameters'][0]['weather'][0];
             var timeLayout = resultWeather['$']['time-layout'];
             resultWeather = resultWeather['weather-conditions'];
@@ -76,13 +83,13 @@ exports.forecast = function(zipcode)
                var hour = times[timeLayout][i].start;
                var day = getDay(hour); 
 
-               if (typeof predictions[day] === "undefined")
-                  predictions[day] = {};
+               if (typeof forecast[day].predictions === "undefined")
+                  forecast[day].predictions = {};
 
-               predictions[day][hour] = resultWeather[i]['value'][0]['$'];
+               forecast[day].predictions[hour] = resultWeather[i]['value'][0]['$'];
             }
 
-            console.log(predictions);
+            console.log(forecast);
          });
       }
    });
