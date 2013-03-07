@@ -28,8 +28,10 @@ var respond = function(zipcode, res, location)
 			weather: response
 		};
 
+		response = JSON.stringify(response);
+
 		if (client)
-			client.setex(zipcode, 21600, JSON.stringify(response));
+			client.setex(zipcode, 21600, response);
 		
 		res.end(response);
 	};
@@ -52,10 +54,12 @@ var respond = function(zipcode, res, location)
 app.get('/', function (req, res)
 {
 	res.setHeader('Content-Type', 'application/json');
-
-   res.send({
+	var response = {
       "error": "Expecting input. (/zip/:zipcode) (/gps/:lat/:lng)"
-   });
+   };
+   response = JSON.stringify(response);
+
+   res.end(response);
 });
 
 app.get('/zip/:zip', function (req, res)

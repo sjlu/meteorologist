@@ -21,11 +21,12 @@ var getHour = function(time)
    return hour;
 };
 
-exports.forecast = function(zipcode, evt)
+exports.forecast = function(zipcode, evtHandler)
 {
    request(url + '&zipCodeList=' + zipcode, function (error, response, body) 
    {
-      if (!error && response.statusCode == 200) {
+      if (!error && response.statusCode == 200) 
+      {
          parseXml(body, function (err, result)
          {
             // just ignore some stuff we don't need.
@@ -139,8 +140,8 @@ exports.forecast = function(zipcode, evt)
 
             // console.log(JSON.stringify(formatted));
 
-            if (typeof evt === 'function')
-               evt(formatted);
+            if (typeof evtHandler === 'function')
+               evtHandler(formatted);
          });
       }
    });
