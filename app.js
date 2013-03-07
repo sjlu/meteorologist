@@ -5,11 +5,20 @@ var fs = require('fs');
 var _ = require('lodash');
 
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&Unit=e&wx=wx&Submit=Submit';
-var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=glanceUnit=e&maxt=maxt&mint=mint&wx=wx&Submit=Submit'
+// var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=glanceUnit=e&maxt=maxt&mint=mint&wx=wx&Submit=Submit'
+var url = 'http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php?format=24+hourly&numDays=7'
 
 var getDay = function(time)
 {
-   return moment(moment.unix(time).format('MMDDYYYY'), 'MMDDYYYY').format('X');
+   var substring = time.substring(0, 10);
+   var day = moment(moment(substring, "YYYY-MM-DD").format('MMDDYYYY'), 'MMDDYYYY').format('YYYYMMDD');
+   return day;
+}
+
+var getHour = function(time)
+{
+   var hour = '' + time.substring(11, 13) + time.substring(14, 16);
+   return hour;
 }
 
 exports.forecast = function(zipcode, evt, res)
@@ -38,7 +47,7 @@ exports.forecast = function(zipcode, evt, res)
                for (var j = 0; j < results.times[i]['start-valid-time'].length; j++)
                {
                   // create the interval time.
-                  var interval = moment(results.times[i]['start-valid-time'][j]).format('X');
+                  var interval = results.times[i]['start-valid-time'][j];
 
                   // we need to start-up our response with days
                   // as that's how we're going to respond to people
@@ -72,6 +81,9 @@ exports.forecast = function(zipcode, evt, res)
                // and see the temperature for the day.
                for (var j in results.temps[i].value)
                {
+                  if (typeof results.temps[i].value[j] === "object")
+                     continue;
+
                   var day = getDay(times[timeLayout][j]);
 
                   // build it out into our array.
@@ -89,69 +101,40 @@ exports.forecast = function(zipcode, evt, res)
             // looking at each prediction
             for (var i in results.predictions)
             {
-               if (typeof results.predictions[i]['value'] === "undefined")
-                  continue;
+               // if (typeof results.predictions[i]['value'] === "undefined")
+               //    continue;
 
                // each interval is always on the hour
                // we just need to get the day.
-               var hour = times[timeLayout][i];
-               var day = getDay(hour); 
+               var hour = getHour(times[timeLayout][i]);
+               var day = getDay(times[timeLayout][i]); 
 
-               if (typeof forecast[day].predictions === "undefined")
-                  forecast[day].predictions = {};
-
-               var prediction = results.predictions[i]['value'][0]['$'];
                // take the prediction and place it directly into the object.
-               forecast[day].predictions[hour] = {
-                  'prediction': prediction['coverage'],
-                  'intensity': prediction['intensity'],
-                  'weather': prediction['weather-type']
-               };
+               forecast[day].prediction = results.predictions[i]['$']['weather-summary'];
             }
+
+            // console.log(JSON.stringify(forecast));
 
             var formatted = [];
             for (var i in forecast)
             {
                var format = {};
-               var day = moment(i, 'X');
+               var day = moment(i, 'YYYYMMDD');
 
                // format day
                format.day = {
-                  "utc": day.format(),
-                  // "readable": day.calendar(),
+                  "numeric": i,
                   "readable": day.format('dddd, MMMM D, YYYY')
                }
 
                // format temps
                format.temperatures = forecast[i].temperatures;
-
-               // format a single prediction & hour by hour
-               var predictions = [];
-               var previous = null;
-               for (var j in forecast[i].predictions)
-               {
-                  // skip all duplicates
-                  if (_.isEqual(previous, forecast[i].predictions[j]))
-                     continue;
-
-                  var prediction = {};
-                  var hour = moment(j, 'X');
-
-                  prediction.hour = {
-                     "utc": hour.format(),
-                     "readable": hour.format('HH:mm') 
-                  }
-
-                  prediction.forecast = forecast[i].predictions[j];
-
-                  previous = forecast[i].predictions[j];
-                  predictions.push(prediction);
-               }
-
-               format.predictions = predictions;
+               format.prediction = forecast[i].prediction;
 
                formatted.push(format);
             }
+
+            // console.log(JSON.stringify(formatted));
 
             if (typeof evt === 'function')
                evt(formatted, res);
