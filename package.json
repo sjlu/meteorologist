@@ -11,5 +11,12 @@
       "moment": "2.x",
       "lodash": "1.x"
    },
+   "devDependencies": {
+      "mocha": "1.8.x"
+   },
+   "scripts": {
+      "start": "server.js",
+      "test": "make test"
+   },
    "main": "app.js"
 }
