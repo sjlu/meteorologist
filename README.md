@@ -28,25 +28,14 @@ You can also use this as a module, note that it is built asynchronously, you'll 
 	[
 	    {
 	        "day": {
-	            "utc": "2013-03-06T00:00:00-05:00",
-	            "readable": "Wednesday, March 6, 2013"
+	            "numeric": "20130307",
+	            "readable": "Thursday, March 7, 2013"
 	        },
 	        "temperatures": {
-	            "low": "33"
+	            "high": "42",
+	            "low": "30"
 	        },
-	        "predictions": [
-	            {
-	                "hour": {
-	                    "utc": "2013-03-06T22:00:00-05:00",
-	                    "readable": "22:00"
-	                },
-	                "forecast": {
-	                    "prediction": "definitely",
-	                    "intensity": "light",
-	                    "weather": "rain"
-	                }
-	            }
-	        ]
+	        "prediction": "Snow"
 	    }
 	]
 
