@@ -13,6 +13,13 @@ var forecast = function(zipcode, res)
 	meteorologist.forecast(zipcode, handler, res);
 }
 
+app.get('/', function (req, res)
+{
+   res.send({
+      "error": "Expecting input. (/zip/:zipcode) (/gps/:lat/:lng)"
+   });
+});
+
 app.get('/zip/:zip', function (req, res)
 {
    var zip = req.params.zip;

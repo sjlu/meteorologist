@@ -18,5 +18,9 @@
       "start": "server.js",
       "test": "make test"
    },
-   "main": "app.js"
+   "main": "app.js",
+   "subdomain": "sjlu.meteorologist",
+   "engines": {
+      "node": "0.8.x"
+   }
 }
