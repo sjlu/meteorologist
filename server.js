@@ -13,16 +13,20 @@ if (process.env.REDIS_HOST)
 		client.auth(process.env.REDIS_PASSWORD);
 }
 
-var respond = function(zipcode, res, location)
+var respond = function(zipcode, res)
 {	
-	if (!location)
-		location = cities.zip_lookup(zipcode);
-
 	res.setHeader('Content-Type', 'application/json');
 	res.setHeader('Cache-Control', 'max-age=21600');
 
+	var location = cities.zip_lookup(zipcode);
+   if (!location)
+      return res.end(JSON.stringify({error: 'Location invalid.'});
+
 	var handler = function(response)
 	{
+		if (response.error)
+			return res.end(JSON.stringify(response));
+
 		response = {
 			location: location,
 			weather: response
@@ -33,7 +37,7 @@ var respond = function(zipcode, res, location)
 		if (client)
 			client.setex(zipcode, 21600, response);
 		
-		res.end(response);
+		return res.end(response);
 	};
 
 	if (client)
@@ -76,7 +80,7 @@ app.get('/gps/:lat/:lng', function (req, res)
 	// do a location lookup first.
 	var lookup = cities.gps_lookup(lat, lng);
 
-	respond(lookup.zipcode, res, lookup);
+	respond(lookup.zipcode, res);
 });
 
 app.listen(4000);
