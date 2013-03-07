@@ -20,7 +20,7 @@ var respond = function(zipcode, res)
 
 	var location = cities.zip_lookup(zipcode);
    if (!location)
-      return res.end(JSON.stringify({error: 'Location invalid.'});
+      return res.end(JSON.stringify({error: 'Location invalid.'}));
 
 	var handler = function(response)
 	{
