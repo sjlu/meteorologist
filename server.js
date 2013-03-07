@@ -13,29 +13,46 @@ if (typeof process.env.REDIS_HOST === 'string')
 		client.auth(process.env.REDIS_PASSWORD);
 }
 
-var handler = function(response, res)
-{
-	if (client)
-		client.setex(0, 21600, response);
-	
-	res.send(response);
-};
+var respond = function(zipcode, res, location)
+{	
+	if (!location)
+		location = cities.zip_lookup(zipcode);
 
-var forecast = function(zipcode, res)
-{
+	res.setHeader('Content-Type', 'application/json');
+	res.setHeader('Cache-Control', 'max-age=21600');
+
+	var handler = function(response)
+	{
+		response = {
+			location: location,
+			weather: response
+		};
+
+		if (client)
+			client.setex(zipcode, 21600, JSON.stringify(response));
+		
+		res.end(response);
+	};
+
 	if (client)
 	{
-		client.get(0, function (err, result) {
-			if (err)
-				meteorologist.forecast(zipcode, handler, res);
+		client.get(zipcode, function (err, result) {
+			if (err || !result)
+				meteorologist.forecast(zipcode, handler);
 			else
-				res.send(result);
+				res.end(result);
 		});
+
+		return;
 	}
+
+	meteorologist.forecast(zipcode, handler);
 };
 
 app.get('/', function (req, res)
 {
+	res.setHeader('Content-Type', 'application/json');
+
    res.send({
       "error": "Expecting input. (/zip/:zipcode) (/gps/:lat/:lng)"
    });
@@ -44,7 +61,7 @@ app.get('/', function (req, res)
 app.get('/zip/:zip', function (req, res)
 {
    var zip = req.params.zip;
-   forecast(zip, res);
+   respond(zip, res);
 });
 
 app.get('/gps/:lat/:lng', function (req, res)
@@ -55,7 +72,7 @@ app.get('/gps/:lat/:lng', function (req, res)
 	// do a location lookup first.
 	var lookup = cities.gps_lookup(lat, lng);
 
-	forecast(lookup.zipcode, res);
+	respond(lookup.zipcode, res, lookup);
 });
 
 app.listen(4000);

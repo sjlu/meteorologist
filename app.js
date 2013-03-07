@@ -6,22 +6,22 @@ var _ = require('lodash');
 
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&Unit=e&wx=wx&Submit=Submit';
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=glanceUnit=e&maxt=maxt&mint=mint&wx=wx&Submit=Submit'
-var url = 'http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php?format=24+hourly&numDays=7'
+var url = 'http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php?format=24+hourly&numDays=7';
 
 var getDay = function(time)
 {
    var substring = time.substring(0, 10);
    var day = moment(moment(substring, "YYYY-MM-DD").format('MMDDYYYY'), 'MMDDYYYY').format('YYYYMMDD');
    return day;
-}
+};
 
 var getHour = function(time)
 {
    var hour = '' + time.substring(11, 13) + time.substring(14, 16);
    return hour;
-}
+};
 
-exports.forecast = function(zipcode, evt, res)
+exports.forecast = function(zipcode, evt)
 {
    request(url + '&zipCodeList=' + zipcode, function (error, response, body) 
    {
@@ -140,7 +140,7 @@ exports.forecast = function(zipcode, evt, res)
             // console.log(JSON.stringify(formatted));
 
             if (typeof evt === 'function')
-               evt(formatted, res);
+               evt(formatted);
          });
       }
    });
