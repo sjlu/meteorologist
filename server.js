@@ -1,17 +1,38 @@
 var meteorologist = require('./app');
 var cities = require('cities');
 var express = require('express');
+var redis = require('redis');
 var app = express();
+
+// option to caching with redis
+var client = null;
+if (typeof process.env.REDIS_HOST === 'string')
+{
+	client = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+	if (typeof process.env.REDIS_PASSWORD === 'string')
+		client.auth(process.env.REDIS_PASSWORD);
+}
 
 var handler = function(response, res)
 {
+	if (client)
+		client.setex(0, 21600, response);
+	
 	res.send(response);
-}
+};
 
 var forecast = function(zipcode, res)
 {
-	meteorologist.forecast(zipcode, handler, res);
-}
+	if (client)
+	{
+		client.get(0, function (err, result) {
+			if (err)
+				meteorologist.forecast(zipcode, handler, res);
+			else
+				res.send(result);
+		});
+	}
+};
 
 app.get('/', function (req, res)
 {
