@@ -118,6 +118,9 @@ exports.forecast = function(zipcode, evt, res)
             var formatted = [];
             for (var i in forecast)
             {
+               if (typeof forecast[i].prediction === "undefined")
+                  continue;
+
                var format = {};
                var day = moment(i, 'YYYYMMDD');
 
