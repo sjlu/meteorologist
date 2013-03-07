@@ -6,10 +6,10 @@ var app = express();
 
 // option to caching with redis
 var client = null;
-if (typeof process.env.REDIS_HOST === 'string')
+if (process.env.REDIS_HOST)
 {
 	client = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
-	if (typeof process.env.REDIS_PASSWORD === 'string')
+	if (typeof process.env.REDIS_PASSWORD)
 		client.auth(process.env.REDIS_PASSWORD);
 }
 
