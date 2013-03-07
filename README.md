@@ -39,6 +39,12 @@ You can also use this as a module, note that it is built asynchronously, you'll 
 	    }
 	]
 
+## Notes
+
+Some important things to note is that the functionality will stay true to the requested location's timezone. Though the timezone is not listed, it will always be in that locale.
+
+It is also important to note that the NOAA service is horrible and sometimes doesn't respond. It is important to check for `.error` in any of the responses just in case we encounter bad data. 
+
 ## License
 
 MIT.
