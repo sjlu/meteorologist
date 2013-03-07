@@ -1,9 +1,33 @@
+var meteorologist = require('./app');
+var cities = require('cities');
 var express = require('express');
 var app = express();
 
-app.get('/', function (req, res)
+var handler = function(response, res)
 {
-   res.send(cities.zip_lookup(07946));
+	res.send(response);
+}
+
+var forecast = function(zipcode, res)
+{
+	meteorologist.forecast(zipcode, handler, res);
+}
+
+app.get('/zip/:zip', function (req, res)
+{
+   var zip = req.params.zip;
+   forecast(zip, res);
+});
+
+app.get('/gps/:lat/:lng', function (req, res)
+{
+	var lat = req.params.lat;
+	var lng = req.params.lng;
+
+	// do a location lookup first.
+	var lookup = cities.gps_lookup(lat, lng);
+
+	forecast(lookup.zipcode, res);
 });
 
 app.listen(4000);

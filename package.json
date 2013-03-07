@@ -8,7 +8,8 @@
       "cities": "1.x",
       "request": "2.14.x",
       "xml2js": "0.2.x",
-      "moment": "2.x"
+      "moment": "2.x",
+      "lodash": "1.x"
    },
    "main": "app.js"
 }

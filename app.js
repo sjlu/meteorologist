@@ -2,6 +2,7 @@ var request = require('request');
 var parseXml = require('xml2js').parseString;
 var moment = require('moment');
 var fs = require('fs');
+var _ = require('lodash');
 
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&Unit=e&wx=wx&Submit=Submit';
 var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=glanceUnit=e&maxt=maxt&mint=mint&wx=wx&Submit=Submit'
@@ -11,9 +12,10 @@ var getDay = function(time)
    return moment(moment.unix(time).format('MMDDYYYY'), 'MMDDYYYY').format('X');
 }
 
-exports.forecast = function(zipcode)
+exports.forecast = function(zipcode, evt, res)
 {
-   request(url + '&zipCodeList=' + zipcode, function (error, response, body) {
+   request(url + '&zipCodeList=' + zipcode, function (error, response, body) 
+   {
       if (!error && response.statusCode == 200) {
          parseXml(body, function (err, result)
          {
@@ -107,10 +109,53 @@ exports.forecast = function(zipcode)
                };
             }
 
-            console.log(JSON.stringify(forecast));
+            var formatted = [];
+            for (var i in forecast)
+            {
+               var format = {};
+               var day = moment(i, 'X');
+
+               // format day
+               format.day = {
+                  "utc": day.format(),
+                  // "readable": day.calendar(),
+                  "readable": day.format('dddd, MMMM D, YYYY')
+               }
+
+               // format temps
+               format.temperatures = forecast[i].temperatures;
+
+               // format a single prediction & hour by hour
+               var predictions = [];
+               var previous = null;
+               for (var j in forecast[i].predictions)
+               {
+                  // skip all duplicates
+                  if (_.isEqual(previous, forecast[i].predictions[j]))
+                     continue;
+
+                  var prediction = {};
+                  var hour = moment(j, 'X');
+
+                  prediction.hour = {
+                     "utc": hour.format(),
+                     "readable": hour.format('HH:mm') 
+                  }
+
+                  prediction.forecast = forecast[i].predictions[j];
+
+                  previous = forecast[i].predictions[j];
+                  predictions.push(prediction);
+               }
+
+               format.predictions = predictions;
+
+               formatted.push(format);
+            }
+
+            if (typeof evt === 'function')
+               evt(formatted, res);
          });
       }
    });
 }
-
-exports.forecast('08901');
