@@ -18,19 +18,10 @@ var respond = function(zipcode, res)
 	res.setHeader('Content-Type', 'application/json');
 	res.setHeader('Cache-Control', 'max-age=21600');
 
-	var location = cities.zip_lookup(zipcode);
-   if (!location)
-      return res.end(JSON.stringify({error: 'Location invalid.'}));
-
 	var handler = function(response)
 	{
 		if (response.error)
 			return res.end(JSON.stringify(response));
-
-		response = {
-			location: location,
-			weather: response
-		};
 
 		response = JSON.stringify(response);
 

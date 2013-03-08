@@ -3,6 +3,7 @@ var parseXml = require('xml2js').parseString;
 var moment = require('moment');
 var fs = require('fs');
 var _ = require('lodash');
+var cities = require('cities');
 
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&Unit=e&wx=wx&Submit=Submit';
 // var url = 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=glanceUnit=e&maxt=maxt&mint=mint&wx=wx&Submit=Submit'
@@ -25,6 +26,10 @@ exports.forecast = function(zipcode, evtHandler)
 {
    if (typeof evtHandler != 'function')
       return;
+
+   var location = cities.zip_lookup(zipcode);
+   if (!location)
+      return evtHandler({error: 'Location invalid.'});
 
    request(url + '&zipCodeList=' + zipcode, function (error, response, body) 
    {
@@ -148,7 +153,7 @@ exports.forecast = function(zipcode, evtHandler)
          // console.log(JSON.stringify(formatted));
 
          if (typeof evtHandler === 'function')
-            return evtHandler(formatted);
+            return evtHandler({location: location, weather: formatted});
       });
    });
 }
