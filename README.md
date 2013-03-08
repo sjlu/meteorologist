@@ -25,19 +25,29 @@ You can also use this as a module, note that it is built asynchronously, you'll 
 
 ## Sample
 
-	[
-	    {
-	        "day": {
-	            "numeric": "20130307",
-	            "readable": "Thursday, March 7, 2013"
-	        },
-	        "temperatures": {
-	            "high": "42",
-	            "low": "30"
-	        },
-	        "prediction": "Snow"
-	    }
-	]
+{
+    "location": {
+        "zipcode": "07946",
+        "state_abbr": "NJ",
+        "latitude": "40.672823",
+        "longitude": "-74.52011",
+        "city": "Millington",
+        "state": "New Jersey"
+    },
+    "weather": [
+        {
+            "day": {
+                "numeric": "20130308",
+                "readable": "Friday, March 8, 2013"
+            },
+            "temperatures": {
+                "high": "39",
+                "low": "27"
+            },
+            "prediction": "Rain/Snow Likely"
+        }
+    ]
+}
 
 ## Notes
 
