@@ -52,6 +52,7 @@ var NDFD = (function()
    function NDFD(xmlobj) 
    {
       this.data = xmlobj['dwml']['data'][0];
+      // console.log(JSON.stringify(this.data));
    }
 
    // get a singular NDFD timeLayout based
@@ -170,27 +171,15 @@ var NDFD = (function()
       return predictions;
    }
 
-   // This will generate temperatures for us.
-   NDFD.prototype.getTemps = function()
+   NDFD.prototype.getValues = function(results)
    {
-      if (this.temps != null)
-         return this.temps;
-
-      var temps = {};
-      var results = this.data['parameters'][0]['temperature'];
-      var types = [];
+      var output = {};
+      var keys = [];
 
       for (var i in results)
       {
          // gotta figure out what time layout we're using.
          var timeLayout = this.getTimeLayout(results[i]['$']['time-layout']);
-         
-         // hourly sounds bad, switching this to acutal.
-         var type = results[i]['$'].type;
-         if (type == 'hourly')
-            type = 'actual';
-
-         types.push(type);
 
          // so each value is directly correlated to our
          // values of time layouts. we'll walk through each
@@ -204,45 +193,78 @@ var NDFD = (function()
             var day = time.getDay();
             var hour = time.getHour();
 
+            var type = results[i]['$'].type;
+            keys.push(type);
+
             // don't worry about this, its just
             // building out our array.
-            if (temps[day] == null)
-               temps[day] = {};
+            if (output[day] == null)
+               output[day] = {};
 
-            if (temps[day]['hours'] == null)
-               temps[day]['hours'] = {};
+            if (output[day]['hours'] == null)
+               output[day]['hours'] = {};
 
-            if (temps[day]['hours'][hour] == null)
-               temps[day]['hours'][hour] = {}
+            if (output[day]['hours'][hour] == null)
+               output[day]['hours'][hour] = {}
 
-            temps[day]['hours'][hour][type] = results[i].value[j];
+            output[day]['hours'][hour][type] = results[i].value[j];
          }
       }
+
+      return {output: output, keys: keys};
+   }
+
+   NDFD.prototype.getMinMax = function(values, types)
+   {
+      var output = {};
+      for (var z in types)
+      {
+         output[types[z]] = {
+            'min': _.min(values, function(a) { return a[types[z]]; })[types[z]],
+            'max': _.max(values, function(a) { return a[types[z]]; })[types[z]]
+         }
+      }
+      return output;
+   };
+
+   NDFD.prototype.getAttribute = function(attr)
+   {
+      if (this['attr'] != null)
+         return this['attr'];
+
+      var results = this.getValues(this.data['parameters'][0][attr]);
+      var output = results.output;
+      var types = results.keys;
 
       // this part adds in the day temperature
       // attributes. We want to find min and max.
-      for (var k in temps)
+      for (var k in output)
       {
-         if (temps[k]['attributes'] == null)
-            temps[k]['attributes'] = {
-               temperatures: {
-                  min: {},
-                  max: {}
-               }
-            };
+         if (output[k]['attributes'] == null)
+            output[k]['attributes'] = {};
 
-         for (var z in types)
-         {
-            // ugly, but this finds our min and max for us for each type
-            // of temperature we have.
-            temps[k]['attributes']['temperatures']['min'][types[z]] = _.min(temps[k]['hours'], function(a) { return a[types[z]]; })[types[z]];
-            temps[k]['attributes']['temperatures']['max'][types[z]] = _.max(temps[k]['hours'], function(a) { return a[types[z]]; })[types[z]];
-         }
+         output[k]['attributes'][attr] = this.getMinMax(output[k]['hours'], types);
       }
 
-      this.temps = temps;
-      return temps;
+      this[attr] = output;
+      return output;
    };
+
+   // This will generate temperatures for us.
+   NDFD.prototype.getTemps = function()
+   {
+      return this.getAttribute('temperature');
+   };
+
+   NDFD.prototype.getHumidity = function()
+   {
+      return this.getAttribute('humidity');
+   }
+
+   NDFD.prototype.getPrecipitation = function()
+   {
+      return this.getAttribute('probability-of-precipitation');
+   }
 
    return NDFD;
 
@@ -300,6 +322,7 @@ exports.execute = function(zipcode, evtHandler)
       return evtHandler(results);
    };
 
+
    for (var type in urls)
       exports.retrieve(urls[type] + '&zipCodeList=' + zipcode, type, responseHandler);
 };
@@ -325,7 +348,7 @@ exports.forecast = function(zipcode, evtHandler)
          weather: []
       };
 
-      var data = _.merge(results.summary.getPredictions(), results.hourly.getTemps());
+      var data = _.merge(results.summary.getPredictions(), results.hourly.getTemps(), results.hourly.getHumidity());
 
       // formatting related.
       for (var day in data)
@@ -345,4 +368,24 @@ exports.forecast = function(zipcode, evtHandler)
    exports.execute(zipcode, responseHandler);
 };
 
-// exports.forecast('07946', function(e) { console.log(JSON.stringify(e)); });
+exports.hourly = function(zipcode, evtHandler)
+{
+   if (typeof evtHandler != 'function')
+      return;
+
+   // new NDFD objects are passed through here
+   // and given to us. We want to then use 
+   // these NDFD objects to generate our 
+   // weather prediction outputs.
+   var responseHandler = function(results)
+   {
+      console.log(JSON.stringify(results.hourly.getTemps()));
+      console.log(JSON.stringify(results.hourly.getHumidity()));
+      console.log(JSON.stringify(results.hourly.getPredictions()));
+   };
+
+   exports.execute(zipcode, responseHandler);
+}
+
+exports.forecast('07946', function(e) { console.log(JSON.stringify(e)); });
+// exports.hourly('07946', function(e) { console.log(JSON.stringify(e)); });
