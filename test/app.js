@@ -10,10 +10,6 @@ describe('forecast', function()
          assert.equal('07946', e.location.zipcode);
          assert.equal(typeof e.weather, 'object');
          assert.equal(typeof e.weather[0], 'object');
-         assert.equal(typeof e.weather[0].day, 'object');
-         assert.equal(typeof e.weather[0].forecast, 'object');
-         assert.equal(typeof e.weather[0].forecast.prediction, 'string');
-         assert.equal(typeof e.weather[0].forecast.temperature, 'object');
          done();
       });
    });
