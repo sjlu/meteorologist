@@ -8,8 +8,8 @@ Meteorologist is a wrapper around NOAA's weather forecasts. Since NOAA response 
 
 You should clone this repository and run the following.
 
-	npm install
-	node server.js
+    npm install
+    node server.js
 
 You can then request on `http://localhost:4000` with the following endpoints.
 
@@ -31,21 +31,21 @@ These endpoints return you hour to hour predictions throughout the days.
 
 You can also use this as a module, note that it is built asynchronously, you'll need to `npm install meteorologist`.
 
-	var meteorologist = require('meteorologist');
+    var meteorologist = require('meteorologist');
 
 #### Daily Forecasts
 
-	meteorologist.forecast(:zipcode, function(res) // any 5 digit US zipcode
-	{
-		console.log(res);
-	});
+    meteorologist.forecast(:zipcode, function(res) // any 5 digit US zipcode
+    {
+        console.log(res);
+    });
 
 #### Hourly Predictions
 
-   meteorologist.predictions(:zipcode, function(res)
-   {
+    meteorologist.predictions(:zipcode, function(res)
+    {
       console.log(res);
-   });
+    });
 
 ## Samples
 
