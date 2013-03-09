@@ -13,10 +13,13 @@ if (process.env.REDIS_HOST)
 		client.auth(process.env.REDIS_PASSWORD);
 }
 
-var respond = function(zipcode, res)
+var respond = function(type, zipcode, res)
 {	
 	res.setHeader('Content-Type', 'application/json');
 	res.setHeader('Cache-Control', 'max-age=21600');
+
+	if (type != 'forecast' && type != 'predictions')
+		return res.end(JSON.stringify({'error': 'Improper request.'}));
 
 	var handler = function(response)
 	{
@@ -26,16 +29,24 @@ var respond = function(zipcode, res)
 		response = JSON.stringify(response);
 
 		if (client)
-			client.setex(zipcode, 21600, response);
+			client.setex(type + "-" + zipcode, 21600, response);
 		
 		return res.end(response);
 	};
 
+	var call = function()
+	{
+		if (type == 'forecast')
+			meteorologist.forecast(zipcode, handler);
+		else if (type == 'predictions')
+			meteorologist.predictions(zipcode, handler);
+	}
+
 	if (client)
 	{
-		client.get(zipcode, function (err, result) {
+		client.get(type + "-" + zipcode, function (err, result) {
 			if (err || !result)
-				meteorologist.forecast(zipcode, handler);
+				call();
 			else
 				res.end(result);
 		});
@@ -43,35 +54,37 @@ var respond = function(zipcode, res)
 		return;
 	}
 
-	meteorologist.forecast(zipcode, handler);
+	call();
 };
 
 app.get('/', function (req, res)
 {
 	res.setHeader('Content-Type', 'application/json');
 	var response = {
-      "error": "Expecting input. (/zip/:zipcode) (/gps/:lat/:lng)"
+      "error": "Expecting input. (/[forecast,predictions]/zip/:zipcode) (/[forecast,predictions]/gps/:lat/:lng)"
    };
    response = JSON.stringify(response);
 
    res.end(response);
 });
 
-app.get('/zip/:zip', function (req, res)
+app.get('/:type/zip/:zip', function (req, res)
 {
+	var type = req.params.type;
    var zip = req.params.zip;
-   respond(zip, res);
+   respond(type, zip, res);
 });
 
-app.get('/gps/:lat/:lng', function (req, res)
+app.get('/:type/gps/:lat/:lng', function (req, res)
 {
+	var type = req.params.type;
 	var lat = req.params.lat;
 	var lng = req.params.lng;
 
 	// do a location lookup first.
 	var lookup = cities.gps_lookup(lat, lng);
 
-	respond(lookup.zipcode, res);
+	respond(type, lookup.zipcode, res);
 });
 
 app.listen(4000);

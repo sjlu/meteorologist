@@ -434,7 +434,7 @@ exports.forecast = function(zipcode, evtHandler)
    exports.execute(zipcode, responseHandler);
 };
 
-exports.hourly = function(zipcode, evtHandler)
+exports.predictions = function(zipcode, evtHandler)
 {
    if (typeof evtHandler != 'function')
       return;
@@ -452,4 +452,4 @@ exports.hourly = function(zipcode, evtHandler)
 }
 
 // exports.forecast('07946', function(e) { console.log(JSON.stringify(e)); });
-exports.hourly('07946', function(e) { console.log(JSON.stringify(e)); });
+// exports.predictions('07946', function(e) { console.log(JSON.stringify(e)); });

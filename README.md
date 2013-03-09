@@ -24,8 +24,8 @@ The following endpoints return daily forecats given on the location.
 
 These endpoints return you hour to hour predictions throughout the days.
 
-* `/hourly/gps/:lat/:lng`
-* `/hourly/zip/:zipcode`
+* `/predictions/gps/:lat/:lng`
+* `/predictions/zip/:zipcode`
 
 ### Module
 
@@ -42,7 +42,7 @@ You can also use this as a module, note that it is built asynchronously, you'll 
 
 #### Hourly Predictions
 
-   meteorologist.hourly(:zipcode, function(res)
+   meteorologist.predictions(:zipcode, function(res)
    {
       console.log(res);
    });
