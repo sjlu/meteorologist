@@ -11,43 +11,46 @@ You should clone this repository and run the following.
 	npm install
 	node server.js
 
-You can then request on `http://localhost:4000` with the endpoints `/gps/:lat/:lng` and `/zip/:zipcode`.
+You can then request on `http://localhost:4000` with the following endpoints.
+
+#### Daily Forecasts
+
+The following endpoints return daily forecats given on the location.
+
+* `/forecast/gps/:lat/:lng`
+* `/forecast/zip/:zipcode`
+
+#### Hourly Predictions
+
+These endpoints return you hour to hour predictions throughout the days.
+
+* `/hourly/gps/:lat/:lng`
+* `/hourly/zip/:zipcode`
 
 ### Module
 
 You can also use this as a module, note that it is built asynchronously, you'll need to `npm install meteorologist`.
 
 	var meteorologist = require('meteorologist');
+
+#### Daily Forecasts
+
 	meteorologist.forecast(:zipcode, function(res) // any 5 digit US zipcode
 	{
 		console.log(res);
 	});
 
-## Sample
+#### Hourly Predictions
 
-    {
-        "location": {
-            "zipcode": "07946",
-            "state_abbr": "NJ",
-            "latitude": "40.672823",
-            "longitude": "-74.52011",
-            "city": "Millington",
-            "state": "New Jersey"
-        },
-        "weather": [
-            {
-                "day": {
-                    "numeric": "20130308",
-                    "readable": "Friday, March 8, 2013"
-                },
-                "temperatures": {
-                    "high": "39",
-                    "low": "27"
-                },
-                "prediction": "Rain/Snow Likely"
-            }
-        ]
-    }
+   meteorologist.hourly(:zipcode, function(res)
+   {
+      console.log(res);
+   });
+
+## Samples
+
+* [Daily Forecast](https://gist.github.com/sjlu/5126166#file-daily_forecast-json)
+* [Hourly Predictions](https://gist.github.com/sjlu/5126166#file-hourly_predictions-json)
 
 ## Notes
 
