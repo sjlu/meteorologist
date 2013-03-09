@@ -96,7 +96,9 @@ var NDFD = (function()
       if (this.predictions != null)
          return this.predictions;
 
-      var predictions = {}; // what we will return
+      var predictions = {
+         days: {}
+      }; // what we will return
       var results = this.data['parameters'][0]['weather'][0]; // what they give us.
       // console.log(JSON.stringify(results));
 
@@ -118,7 +120,7 @@ var NDFD = (function()
          // day by day forcasts.
          if (results['weather-conditions'][j]['$'] != null)
          {
-            predictions[day] = {
+            predictions.days[day] = {
                attributes: { // attributes is used to describe the day
                   prediction: results['weather-conditions'][j]['$']['weather-summary']
                }
@@ -145,26 +147,26 @@ var NDFD = (function()
 
             // ignore these statements, 
             // they are just to build out the array.
-            if (predictions[day] == null)
-               predictions[day] = {};
+            if (predictions.days[day] == null)
+               predictions.days[day] = {};
 
-            if (predictions[day]['hours'] == null)
-               predictions[day]['hours'] = {};
+            if (predictions.days[day]['hours'] == null)
+               predictions.days[day]['hours'] = {};
 
-            predictions[day]['hours'][hour] = string;
+            predictions.days[day]['hours'][hour] = string;
          }
          // if we absoutely come upon nothing
          // I guess the weather is clear?
          // we really gotta figure this one out.
          else
          {
-            if (predictions[day] == null)
-               predictions[day] = {};
+            if (predictions.days[day] == null)
+               predictions.days[day] = {};
 
-            if (predictions[day]['hours'] == null)
-               predictions[day]['hours'] = {};
+            if (predictions.days[day]['hours'] == null)
+               predictions.days[day]['hours'] = {};
 
-            predictions[day]['hours'][hour] = 'clear';
+            predictions.days[day]['hours'][hour] = 'clear';
          }
       }
 
@@ -174,8 +176,8 @@ var NDFD = (function()
    NDFD.prototype.getValues = function(results)
    {
       var output = {};
-      var keys = [];
-
+      // var keys = [];
+      var units = {};
       for (var i in results)
       {
          // gotta figure out what time layout we're using.
@@ -194,7 +196,15 @@ var NDFD = (function()
             var hour = time.getHour();
 
             var type = results[i]['$'].type;
-            keys.push(type);
+            if (type == '12 hour')
+               type = 'probability';
+            else if (type == 'hourly')
+               type = 'actual';
+
+            // keys.push(type);
+
+            var unit = results[i]['$'].units.toLowerCase();
+            units[type] = unit;
 
             // don't worry about this, its just
             // building out our array.
@@ -211,12 +221,18 @@ var NDFD = (function()
          }
       }
 
-      return {output: output, keys: keys};
+      output = {
+         days: output,
+         units: units
+      };
+
+      return output;
    }
 
    NDFD.prototype.getMinMax = function(values, types)
    {
       var output = {};
+      
       for (var z in types)
       {
          output[types[z]] = {
@@ -229,25 +245,24 @@ var NDFD = (function()
 
    NDFD.prototype.getAttribute = function(attr)
    {
-      if (this['attr'] != null)
-         return this['attr'];
+      if (this[attr] != null)
+         return this[attr];
 
       var results = this.getValues(this.data['parameters'][0][attr]);
-      var output = results.output;
-      var types = results.keys;
+      var types = _.keys(results.units);
 
       // this part adds in the day temperature
       // attributes. We want to find min and max.
-      for (var k in output)
+      for (var day in results.days)
       {
-         if (output[k]['attributes'] == null)
-            output[k]['attributes'] = {};
+         if (results.days[day]['attributes'] == null)
+            results.days[day]['attributes'] = {};
 
-         output[k]['attributes'][attr] = this.getMinMax(output[k]['hours'], types);
+         results.days[day]['attributes'] = this.getMinMax(results.days[day]['hours'], types);
       }
-
-      this[attr] = output;
-      return output;
+      // console.log(JSON.stringify(results));
+      this[attr] = results;
+      return results;
    };
 
    // This will generate temperatures for us.
@@ -263,7 +278,17 @@ var NDFD = (function()
 
    NDFD.prototype.getPrecipitation = function()
    {
-      return this.getAttribute('probability-of-precipitation');
+      return this.getAttribute('probability-of-precipitation', 'precipitation');
+   }
+
+   NDFD.prototype.getWind = function()
+   {
+      return this.getAttribute('wind-speed', 'wind');
+   }
+
+   NDFD.prototype.getCloud = function()
+   {
+      return this.getAttribute('cloud-amount', 'cloud');
    }
 
    return NDFD;
@@ -272,7 +297,7 @@ var NDFD = (function()
 
 var urls = { 
    summary: 'http://graphical.weather.gov/xml/sample_products/browser_interface/ndfdBrowserClientByDay.php?format=24+hourly&numDays=7',
-   hourly: 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=time-series&Unit=e&temp=temp&qpf=qpf&pop12=pop12&snow=snow&wspd=wspd&sky=sky&wx=wx&rh=rh&appt=appt&Submit=Submit'
+   hourly: 'http://graphical.weather.gov/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenMultiZipCode&product=time-series&Unit=e&temp=temp&qpf=qpf&pop12=pop12&snow=snow&wspd=wspd&sky=sky&wx=wx&rh=rh&appt=appt&wgust=wgust&Submit=Submit'
 };
 
 // generic execution function to call
@@ -318,8 +343,51 @@ exports.execute = function(zipcode, evtHandler)
       if (_.keys(urls).length != _.keys(results).length)
          return;
       
-      results.location = location;
-      return evtHandler(results);
+      // We will handle all data extraction and merging here.
+      // it makes a lot more sense since all other function
+      // rely off the data coming from this secion.
+      var data = {
+         prediction: _.merge(results.summary.getPredictions(), results.hourly.getPredictions()), 
+         temperature: results.hourly.getTemps(), 
+         humidity: results.hourly.getHumidity(), 
+         precipitation: results.hourly.getPrecipitation(),
+         wind: results.hourly.getWind(),
+         cloud: results.hourly.getCloud()
+      };
+
+      // console.log(JSON.stringify(data));
+
+      // we need to merge all the results together.
+      var merge = {
+         location: location,
+         days: {},
+         units: {}
+      };
+      for (var key in data)
+      {
+         merge.units[key] = data[key].units;
+
+         for (var day in data[key].days)
+         {
+            if (merge.days[day] == null)
+               merge.days[day] = {
+                  attributes: {},
+                  hours: {}
+               };
+
+            merge.days[day]['attributes'][key] = data[key].days[day].attributes;
+
+            for (var hour in data[key].days[day].hours)
+            {
+               if (merge.days[day].hours[hour] == null)
+                  merge.days[day].hours[hour] = {};
+
+               merge.days[day].hours[hour][key] = data[key].days[day].hours[hour];
+            }
+         }
+      }
+
+      return evtHandler(merge);
    };
 
 
@@ -348,17 +416,15 @@ exports.forecast = function(zipcode, evtHandler)
          weather: []
       };
 
-      var data = _.merge(results.summary.getPredictions(), results.hourly.getTemps(), results.hourly.getHumidity());
-
       // formatting related.
-      for (var day in data)
+      for (var day in results.days)
       {
          output.weather.push({
             day: {
                numeric: day,
                readable: moment(day, 'YYYYMMDD').format('dddd, MMMM D, YYYY')
             },
-            forecast: data[day].attributes
+            forecast: results.days[day].attributes
          });
       }
 
@@ -379,13 +445,11 @@ exports.hourly = function(zipcode, evtHandler)
    // weather prediction outputs.
    var responseHandler = function(results)
    {
-      console.log(JSON.stringify(results.hourly.getTemps()));
-      console.log(JSON.stringify(results.hourly.getHumidity()));
-      console.log(JSON.stringify(results.hourly.getPredictions()));
+      evtHandler(results);
    };
 
    exports.execute(zipcode, responseHandler);
 }
 
-exports.forecast('07946', function(e) { console.log(JSON.stringify(e)); });
+// exports.forecast('07946', function(e) { console.log(JSON.stringify(e)); });
 // exports.hourly('07946', function(e) { console.log(JSON.stringify(e)); });
