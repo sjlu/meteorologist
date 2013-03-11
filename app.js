@@ -21,18 +21,18 @@ var NDFD = (function()
       function Time(time)
       {
          this.time = time;
-      }
+      };
 
       Time.prototype.getDay = function()
       {
          return parseInt(this.time.substring(0, 4) + this.time.substring(5, 7) + this.time.substring(8, 10));
-      }
+      };
 
       Time.prototype.getHour = function()
       {
          // return this.time.substring(11, 13) + this.time.substring(14, 16);
          return parseInt(this.time.substring(11, 13));
-      }
+      };
 
       // getFrame will be used to normalize data
       // for hour to hour, which will help limit
@@ -41,7 +41,7 @@ var NDFD = (function()
       {
          var hour = this.getHour();
          return Math.floor(hour/3)*3;
-      }
+      };
 
       return Time;
 
@@ -413,7 +413,8 @@ exports.forecast = function(zipcode, evtHandler)
 
       var output = {
          location: results.location,
-         weather: []
+         weather: [],
+         units: results.units
       };
 
       // formatting related.
