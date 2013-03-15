@@ -14,10 +14,10 @@ if (process.env.REDIS_HOST)
 }
 
 var respond = function(type, zipcode, res)
-{	
+{   
 	res.setHeader('Content-Type', 'application/json');
 	res.setHeader('Cache-Control', 'max-age=21600');
-   res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader("Access-Control-Allow-Origin", "*");
 
 	if (type != 'forecast' && type != 'predictions')
 		return res.end(JSON.stringify({'error': 'Improper request.'}));
@@ -61,12 +61,12 @@ var respond = function(type, zipcode, res)
 app.get('/', function (req, res)
 {
 	res.setHeader('Content-Type', 'application/json');
-   res.setHeader("Access-Control-Allow-Origin", "*");
+	res.setHeader("Access-Control-Allow-Origin", "*");
 
 	var response = {
-      "error": "Expecting input. (/[forecast,predictions]/zip/:zipcode) (/[forecast,predictions]/gps/:lat/:lng)"
-   };
-   response = JSON.stringify(response);
+	  "error": "Expecting input. (/[forecast,predictions]/zip/:zipcode) (/[forecast,predictions]/gps/:lat/:lng)"
+	};
+  	response = JSON.stringify(response);
 
    res.end(response);
 });
@@ -74,8 +74,8 @@ app.get('/', function (req, res)
 app.get('/:type/zip/:zip', function (req, res)
 {
 	var type = req.params.type;
-   var zip = req.params.zip;
-   respond(type, zip, res);
+	var zip = req.params.zip;
+	respond(type, zip, res);
 });
 
 app.get('/:type/gps/:lat/:lng', function (req, res)
