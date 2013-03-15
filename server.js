@@ -17,6 +17,7 @@ var respond = function(type, zipcode, res)
 {	
 	res.setHeader('Content-Type', 'application/json');
 	res.setHeader('Cache-Control', 'max-age=21600');
+   res.setHeader("Access-Control-Allow-Origin", "*");
 
 	if (type != 'forecast' && type != 'predictions')
 		return res.end(JSON.stringify({'error': 'Improper request.'}));
@@ -60,6 +61,8 @@ var respond = function(type, zipcode, res)
 app.get('/', function (req, res)
 {
 	res.setHeader('Content-Type', 'application/json');
+   res.setHeader("Access-Control-Allow-Origin", "*");
+
 	var response = {
       "error": "Expecting input. (/[forecast,predictions]/zip/:zipcode) (/[forecast,predictions]/gps/:lat/:lng)"
    };
