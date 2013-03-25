@@ -8,9 +8,13 @@ var app = express();
 var client = null;
 if (process.env.REDIS_HOST)
 {
-	client = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
-	if (typeof process.env.REDIS_PASSWORD)
-		client.auth(process.env.REDIS_PASSWORD);
+   try {
+	   client = redis.createClient(process.env.REDIS_PORT, process.env.REDIS_HOST);
+	   if (typeof process.env.REDIS_PASSWORD)
+		   client.auth(process.env.REDIS_PASSWORD);
+   } catch (e) {
+      client = null;
+   }
 }
 
 var respond = function(type, zipcode, res)
