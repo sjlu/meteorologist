@@ -142,7 +142,7 @@ var NDFD = (function()
                // TODO: depending on the word of "coverage", we need to place it accordingly
                // read http://graphical.weather.gov/docs/grib_design.html
                string = condition.coverage + ' of ' + condition.intensity + ' ' + condition['weather-type'];
-               if (condition.qualifier != 'none') string = string + ' ' + qualifier + ' ';
+               if (typeof condition.qualifier != 'undefined' && condition.qualifier != 'none') string = string + ' ' + qualifier + ' ';
             }
 
             // ignore these statements, 
